@@ -53,8 +53,6 @@ public class Main : MonoBehaviour
             ++currentResolutionIndex;
         }
 
-        Debug.Break();
-
         // If we found the preferred resolution, use that
         // else, if we found the default resolution, use that
         // else, if the resolution list has at least one entry, use that
@@ -98,13 +96,26 @@ public class Main : MonoBehaviour
 
         Screen.SetResolution(targetResolution.width, targetResolution.height, m_FullScreen);
 
+        m_CurrentResolution = Screen.currentResolution;
+
+        Debug.Log("Achieved window dimensions: " + m_CurrentResolution.width.ToString() + "x" + m_CurrentResolution.height.ToString());
+
         m_ResolutionDropdown = GameObject.Find("Dropdown_ScreenResolution").GetComponent<Dropdown>();
 
-        if(m_ResolutionDropdown)
+        if (m_ResolutionDropdown)
         {
             m_ResolutionDropdown.ClearOptions();
             m_ResolutionDropdown.AddOptions(ResolutionStringList);
             m_ResolutionDropdown.value = preferredResolutionIndex + 1;
+            Debug.Log("Set resolution drop down to index " + m_ResolutionDropdown.value);
+        }
+
+        m_WindowModeDropdown = GameObject.Find("Dropdown_ScreenMode").GetComponent<Dropdown>();
+
+        if (m_WindowModeDropdown)
+        {
+            m_WindowModeDropdown.value = m_FullScreen ? 0 : 1;
+            Debug.Log("Set window mode drop down to index " + m_WindowModeDropdown.value);
         }
     }
 
@@ -120,19 +131,45 @@ public class Main : MonoBehaviour
         PlayerPrefs.SetInt(m_kSettingPrefix + m_kSettingWindowWidth, m_PreferredResolution.width);
         PlayerPrefs.SetInt(m_kSettingPrefix + m_kSettingWindowHeight, m_PreferredResolution.height);
         PlayerPrefs.SetInt(m_kSettingPrefix + m_kSettingFullScreen, m_FullScreen ? 1 : 0);
+
+        Debug.Log("Saved preference: desiredWidth(" + m_PreferredResolution.width.ToString() + ")");
+        Debug.Log("Saved preference: desiredHeight(" + m_PreferredResolution.height.ToString() + ")");
+        Debug.Log("Saved preference: FullScreen(" + m_FullScreen.ToString() + ")");
     }
 
-    public void DropdownValueChangedHandler(int index)
+    public void PreferredResolutionDropdownChangedHandler(int index)
     {
-        Debug.Log("selected: " + index);
+        Debug.Log("resultion selected: " + index);
+
+        // The returned resolutions are sorted by width, lower resolutions come first
+        // I believe this list can be empty on some platforms like Android?
+        Resolution[] resolutionList = Screen.resolutions;
+
+        if(index <= resolutionList.Length && index > 0)
+        {
+            Resolution resolution = resolutionList[index - 1];
+
+            Screen.SetResolution(resolution.width, resolution.height, m_FullScreen);
+
+            m_CurrentResolution = resolution;
+            m_PreferredResolution = resolution;
+        }
+    }
+
+    public void PreferredWindowModeDropdownChangedHandler(int index)
+    {
+        Debug.Log("window mode selected: " + index);
+        m_FullScreen = (index == 0);
+        Screen.SetResolution(m_CurrentResolution.width, m_CurrentResolution.height, m_FullScreen);
     }
 
     // Settings
     private Resolution m_PreferredResolution;
-    private int m_DesiredWindowWidth = -1;
-    private int m_DesiredWindowHeight = -1;
-    private int m_CurrentWindowWidth = 0;
-    private int m_CurrentWindowHeight = 0;
+    private Resolution m_CurrentResolution;
+    //private int m_DesiredWindowWidth = -1;
+    //private int m_DesiredWindowHeight = -1;
+    //private int m_CurrentWindowWidth = 0;
+    //private int m_CurrentWindowHeight = 0;
     private bool m_FullScreen = false;
 
     // Just some name to ensure we do not conflict with system settings
@@ -148,4 +185,5 @@ public class Main : MonoBehaviour
     private const bool m_DefaultFullScreen = true;
 
     private Dropdown m_ResolutionDropdown = null;
+    private Dropdown m_WindowModeDropdown = null;
 }
