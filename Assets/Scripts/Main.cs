@@ -117,6 +117,8 @@ public class Main : MonoBehaviour
             m_WindowModeDropdown.value = m_FullScreen ? 0 : 1;
             Debug.Log("Set window mode drop down to index " + m_WindowModeDropdown.value);
         }
+
+        ResetPhoneApplication();
     }
 
     // Update is called once per frame
@@ -163,13 +165,30 @@ public class Main : MonoBehaviour
         Screen.SetResolution(m_CurrentResolution.width, m_CurrentResolution.height, m_FullScreen);
     }
 
+    public void ResetPhoneApplication()
+    {
+        Debug.Log("ResetPhoneApplication");
+
+        GameObject viewPort = GameObject.Find("Panel_PhoneViewport");
+
+        if (viewPort)
+        {
+            Debug.Log("Found the view port");
+
+            if(m_PhoneMain)
+            {
+                Debug.Log("Destroying view port");
+                m_PhoneMain = null;
+                Destroy(viewPort.GetComponent<PhoneMain>());
+            }
+
+            m_PhoneMain = viewPort.AddComponent<PhoneMain>();
+        }
+    }
+
     // Settings
     private Resolution m_PreferredResolution;
     private Resolution m_CurrentResolution;
-    //private int m_DesiredWindowWidth = -1;
-    //private int m_DesiredWindowHeight = -1;
-    //private int m_CurrentWindowWidth = 0;
-    //private int m_CurrentWindowHeight = 0;
     private bool m_FullScreen = false;
 
     // Just some name to ensure we do not conflict with system settings
@@ -186,4 +205,6 @@ public class Main : MonoBehaviour
 
     private Dropdown m_ResolutionDropdown = null;
     private Dropdown m_WindowModeDropdown = null;
+
+    private PhoneMain m_PhoneMain = null;
 }
