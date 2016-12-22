@@ -22,10 +22,10 @@ public class Main : MonoBehaviour
         Resolution[] resolutionList = Screen.resolutions;
 
         // Create the string list that will be used to populate the UI control for the screen resolution
-        List<string> ResolutionStringList = new List<string>();
+        List<string> resolutionStringList = new List<string>();
 
         // The default option is for whatever the current screen resolution is set to
-        ResolutionStringList.Add("Default");
+        resolutionStringList.Add("Default");
 
         // Iterate through all of the supported resolutions
         // Save the index of the preferred resolution
@@ -35,7 +35,7 @@ public class Main : MonoBehaviour
         foreach (Resolution resolution in resolutionList)
         {
             Debug.Log(resolution.ToString());
-            ResolutionStringList.Add(resolution.width.ToString() + "x" + resolution.height.ToString());
+            resolutionStringList.Add(resolution.width.ToString() + "x" + resolution.height.ToString());
 
             // A match here will only occur if the preferred resolution is not "default"
             if (resolution.width == m_PreferredResolution.width && resolution.height == m_PreferredResolution.height)
@@ -105,7 +105,7 @@ public class Main : MonoBehaviour
         if (m_ResolutionDropdown)
         {
             m_ResolutionDropdown.ClearOptions();
-            m_ResolutionDropdown.AddOptions(ResolutionStringList);
+            m_ResolutionDropdown.AddOptions(resolutionStringList);
             m_ResolutionDropdown.value = preferredResolutionIndex + 1;
             Debug.Log("Set resolution drop down to index " + m_ResolutionDropdown.value);
         }
@@ -118,13 +118,35 @@ public class Main : MonoBehaviour
             Debug.Log("Set window mode drop down to index " + m_WindowModeDropdown.value);
         }
 
+        m_PhoneTypeDropdown = GameObject.Find("Dropdown_PhoneType").GetComponent<Dropdown>();
+
+        if (m_PhoneTypeDropdown)
+        {
+            m_PhoneTypeDropdown.ClearOptions();
+            m_PhoneTypeDropdown.AddOptions( PhoneMain.GetPhoneTypeList() );
+            m_ResolutionDropdown.value = PhoneMain.GetPhoneTypeDefault();
+
+            //
+            m_PhoneTypeDropdown.enabled = false;
+        }
+
+        m_PhoneModelDropdown = GameObject.Find("Dropdown_PhoneModel").GetComponent<Dropdown>();
+
+        if (m_PhoneModelDropdown)
+        {
+            m_PhoneModelDropdown.ClearOptions();
+            m_PhoneModelDropdown.AddOptions(PhoneMain.GetPhoneModelList(PhoneMain.GetPhoneModelDefault(PhoneMain.GetPhoneTypeDefault())));
+            m_PhoneModelDropdown.value = PhoneMain.GetPhoneModelDefault(PhoneMain.GetPhoneTypeDefault());
+            //
+            m_PhoneModelDropdown.enabled = false;
+        }
+
         ResetPhoneApplication();
     }
 
     // Update is called once per frame
     private void Update()
     {
-	
 	}
 
     // Use this to clean up
@@ -141,7 +163,7 @@ public class Main : MonoBehaviour
 
     public void PreferredResolutionDropdownChangedHandler(int index)
     {
-        Debug.Log("resultion selected: " + index);
+        Debug.Log("resolution selected: " + index);
 
         // The returned resolutions are sorted by width, lower resolutions come first
         // I believe this list can be empty on some platforms like Android?
@@ -151,10 +173,13 @@ public class Main : MonoBehaviour
         {
             Resolution resolution = resolutionList[index - 1];
 
+            Debug.Log("Screen.SetResolution(" + resolution.width + ", " + resolution.height + ", " + m_FullScreen + ")");
+
             Screen.SetResolution(resolution.width, resolution.height, m_FullScreen);
 
             m_CurrentResolution = resolution;
             m_PreferredResolution = resolution;
+            StartCoroutine(DelayedNotifyResized());
         }
     }
 
@@ -163,6 +188,17 @@ public class Main : MonoBehaviour
         Debug.Log("window mode selected: " + index);
         m_FullScreen = (index == 0);
         Screen.SetResolution(m_CurrentResolution.width, m_CurrentResolution.height, m_FullScreen);
+        StartCoroutine(DelayedNotifyResized());
+    }
+
+    public void PhoneTypeDropdownChangedHandler(int index)
+    {
+
+    }
+
+    public void PhoneModelDropdownChangedHandler(int index)
+    {
+
     }
 
     public void ResetPhoneApplication()
@@ -183,6 +219,23 @@ public class Main : MonoBehaviour
             }
 
             m_PhoneMain = viewPort.AddComponent<PhoneMain>();
+
+            if (m_PhoneMain && m_PhoneTypeDropdown && m_PhoneModelDropdown)
+            {
+                m_PhoneMain.Initialize(m_PhoneTypeDropdown.value, m_PhoneModelDropdown.value);
+            }
+        }
+    }
+
+    // When you change the resolution, it doesnt actually happen until the next frame.
+    // Waiting until the end of the "next" frame is long enough to ensure it has changed.
+    private IEnumerator DelayedNotifyResized()
+    {
+        if (m_PhoneMain)
+        {
+            yield return new WaitForEndOfFrame();
+            yield return new WaitForEndOfFrame();
+            m_PhoneMain.Resized();
         }
     }
 
@@ -205,6 +258,10 @@ public class Main : MonoBehaviour
 
     private Dropdown m_ResolutionDropdown = null;
     private Dropdown m_WindowModeDropdown = null;
+    private Dropdown m_PhoneTypeDropdown = null;
+    private Dropdown m_PhoneModelDropdown = null;
+
+    private bool m_Dirty = false;
 
     private PhoneMain m_PhoneMain = null;
 }
