@@ -74,15 +74,19 @@ public class PhoneMain : MonoBehaviour
 
         m_RectTransform = this.GetComponent<RectTransform>();
 
-        Text screenWidth = GameObject.Find("Text_WindowWidth").GetComponent<Text>();
-        Text screenHeight = GameObject.Find("Text_WindowHeight").GetComponent<Text>();
+        Text emulatedScreenWidth = GameObject.Find("Text_EmulatedWindowWidth").GetComponent<Text>();
+        Text emulatedScreenHeight = GameObject.Find("Text_EmulatedWindowHeight").GetComponent<Text>();
         Text aspectRatio = GameObject.Find("Text_WindowAspectRatio").GetComponent<Text>();
         Text pixelScale = GameObject.Find("Text_WindowPixelScale").GetComponent<Text>();
+        Text targetScreenWidth = GameObject.Find("Text_TargetWindowWidth").GetComponent<Text>();
+        Text targetScreenHeight = GameObject.Find("Text_TargetWindowHeight").GetComponent<Text>();
 
-        screenWidth.text = m_RectTransform.rect.width.ToString("0");
-        screenHeight.text = m_RectTransform.rect.height.ToString("0");
+        emulatedScreenWidth.text = m_RectTransform.rect.width.ToString("0");
+        emulatedScreenHeight.text = m_RectTransform.rect.height.ToString("0");
         aspectRatio.text = (m_RectTransform.rect.width / m_RectTransform.rect.height).ToString();
         pixelScale.text = "1 : " + (m_RectTransform.rect.width / m_ScreenResolution.width).ToString("0.00");
+        targetScreenWidth.text = m_ScreenResolution.width.ToString("0");
+        targetScreenHeight.text = m_ScreenResolution.height.ToString("0");
     }
 
     // Update is called once per frame
